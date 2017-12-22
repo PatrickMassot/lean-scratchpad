@@ -162,8 +162,18 @@ begin
   { simp[len] }
 end
 
+--- Generating sets
+-------------------
+
+def is_generating (S : set α) : Prop := 
+∀ g : α, ∃ n : ℕ, is_product S n g
+
+structure generating_set :=
+(set : set α)
+(gen : is_generating set)
 
 -- Invariant norms on a group
+-----------------------------
 
 structure is_invariant_norm (ν : α → ℕ) : Prop :=
   (nonneg : ∀ g : α, 0 ≤ ν g) -- this is silly but ultimately the target will be ℝ
@@ -175,13 +185,6 @@ structure is_invariant_norm (ν : α → ℕ) : Prop :=
 def is_conj_invariant_set (S : set α) : Prop :=
    ∀ g s : α, s ∈ S → conj g s ∈ S
      
-
-def is_generating (S : set α) : Prop := 
-∀ g : α, ∃ n : ℕ, is_product S n g
-
-structure generating_set :=
-(set : set α)
-(gen : is_generating set)
 
 /- Given a generating set S and an alement a,
    gen_norm S a is the minimal number of elements of S or S⁻¹ 
