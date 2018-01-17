@@ -30,7 +30,7 @@ instance : has_one H :=
 
 instance : group H :=
 begin
-refine { mul := (*), one := 1, inv:= λ x : H, has_inv.inv x, ..},
+refine { mul := (*), one := 1, inv := λ x, x⁻¹, ..},
 { intros a b c,
  cases a, cases b, cases c,
  simp[has_mul.mul],
