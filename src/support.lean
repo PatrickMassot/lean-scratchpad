@@ -12,7 +12,7 @@ meta def by_double_inclusion : tactic unit := do
 `[apply set.subset.antisymm_iff.2, split]
 
 section topo
-open set 
+open set function
 
 variables {α : Type*} {β : Type*} [topological_space α] [topological_space β]
 /-
@@ -170,44 +170,50 @@ begin
         ... = g (f x) : by rw f_x }
 end
 
-
+-- Next define I'd like to avoid
 def suppp (f : homeo X X) := supp f
 
-
+-- I'd also like to avoid...
 lemma fundamental'' (f g : homeo X X) (H : suppp f ∩ suppp g = ∅) : f * g = g * f :=
 sorry
 
+-- This is one is perfectly legitimate. I wait for Mario's new lemmas before trying that one
 lemma aux_1 {α : Type*} {β : Type*} {f : α → β} {g : β → α} (h : function.left_inverse  f g) (p : α → Prop) :
 f '' {a : α | p a} = {b : β | p (g b)} :=
 sorry
+
+lemma aux_2 {α : Type*} {β : Type*} {f : α → β} (h : injective f) : ∀ x y : α, f x = f y ↔ x = y :=
+assume x y, ⟨by apply h, λ h', congr_arg f h'⟩
 
 lemma supp_conj (f g : homeo X X) : suppp (conj g f) = g '' suppp f :=
 begin
   unfold suppp supp,
   rw homeo.image_closure,
   congr_n 1,
-  rw aux_1,
-  swap,
-  exact g.right_inv,
+  rw aux_1, swap, exact g.right_inv, -- I'd love to `rw aux_1 g.right_inv` instead
   congr,
   funext,
+  rw show ∀ b, (g.to_equiv).inv_fun b = g⁻¹ b, from λ b, rfl,
   dsimp [conj],
-  
-    
-  sorry
+  congr_n 1,
+  exact 
+    calc ((g * f * g⁻¹) x = x) = (g (f (g⁻¹ x)) = x) : sorry
+    ... = (g⁻¹ (g ( f (g⁻¹ x))) = g⁻¹ x) : sorry -- here I'd like to use aux_2
+    ... = (( f (g⁻¹ x)) = g⁻¹ x) : sorry
 end
-lemma aux (g : homeo X X) : ⇑(homeo.symm g) ∘ ⇑g = id :=
+
+lemma aux_3 (g : homeo X X) : ⇑(homeo.symm g) ∘ ⇑g = id :=
 begin
   funext,
   apply equiv.inverse_apply_apply,
 end
 
 
-local notation f ∘ g := homeo.comp g f
 local notation `[[`a, b`]]` := comm a b
-set_option pp.coercions true
+
 lemma TT (g a b : homeo X X) (supp_hyp : suppp a ∩ g '' suppp b = ∅) :
 ∃ c d e f : homeo X X, [[a, b]] = (conj c g)*(conj d g⁻¹)*(conj e g)*(conj f g⁻¹) :=
+
 begin
   apply commutator_trading,
   rw commuting,
@@ -215,10 +221,7 @@ begin
   rw supp_conj,
   replace supp_hyp : g.symm '' (suppp a ∩ g '' suppp b) = ∅,
     by simp[supp_hyp, image_empty],
-  rw ←image_inter at supp_hyp,
-  rw ←image_comp at supp_hyp,
-  rw aux g at supp_hyp,
-  rw image_id at supp_hyp,
+  rw [←image_inter, ←image_comp, aux_3 g, image_id] at supp_hyp,
   exact supp_hyp,
 
   exact function.injective_of_left_inverse g.right_inv,

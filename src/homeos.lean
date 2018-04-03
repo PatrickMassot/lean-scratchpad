@@ -73,8 +73,8 @@ begin
   rw homeo.symm,
   apply equiv.apply_inverse_apply,
 end
-
-instance  aut (α) [topological_space α] : group (homeo α α) :=
+universe u
+instance  aut (α : Type u) [topological_space α] : group (homeo α α) :=
 { mul:=(∘), 
   mul_assoc:=λ a b c, homeo.ext $ by  simp,
   one:=homeo.id α, 
