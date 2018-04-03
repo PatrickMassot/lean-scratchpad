@@ -177,22 +177,19 @@ local notation `[[`a, b`]]` := comm a b
 lemma commuting : [[a, b]] = 1 ↔ a*b = b*a :=
 by simp [comm, -mul_assoc, mul_inv_eq_iff_eq_mul]
 
-lemma commutator_trading : [[conj g⁻¹ a, b]] = 1 → 
+lemma commutator_trading (comm_hyp : [[conj g⁻¹ a, b]] = 1) :
 ∃ c d e f : α, [[a, b]] = (conj c g)*(conj d g⁻¹)*(conj e g)*(conj f g⁻¹) :=
 begin
-  intro comm_hyp,
   simp [conj] at comm_hyp,
   rw ←mul_assoc at comm_hyp,
 
   let a':= g⁻¹*a*g,
-  have H : g*a'*g⁻¹ = a, by simp [a'],
 
   have := calc 
   [[a, b]] = a * b * a⁻¹ * b⁻¹ : rfl
-      ...  = g * a' * g⁻¹ * (a'⁻¹ * a') * b * g * a'⁻¹ * (b⁻¹ * b) * g⁻¹ * b⁻¹ : by simp [H]
+      ...  = g * a' * g⁻¹ * (a'⁻¹ * a') * b * g * a'⁻¹ * (b⁻¹ * b) * g⁻¹ * b⁻¹ : by simp 
       ...  = g * a' * g⁻¹ * a'⁻¹ * b * a' * g * a'⁻¹ * b⁻¹ * b * g⁻¹ * b⁻¹ : by simp [commuting.1 comm_hyp]
-      ...  = (conj 1 g) * (conj a' g⁻¹) * (conj (b*a') g) * (conj b g⁻¹) : by simp [a', conj],
-
-  existsi [(1: α), a', (b*a'), b],
-  assumption,
+      ...  = (conj 1 g) * (conj a' g⁻¹) * (conj (b*a') g) * (conj b g⁻¹) : by simp [conj],
+  finish
 end
+

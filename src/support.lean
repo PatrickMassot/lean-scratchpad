@@ -2,7 +2,8 @@ import analysis.topology.topological_space
 import data.set
 import homeos
 import tactic.find
-
+import norms2
+import tactic
 
 noncomputable theory
 local attribute [instance] classical.prop_decidable
@@ -73,7 +74,7 @@ begin
 end
 
 def supp := closure {x : X | f x ≠ x}
-
+#check f
 lemma compl_supp_subset_fix : -supp f ⊆ fix f :=
 compl_subset_of_compl_subset 
   (calc  -fix f = {x : X | f x ≠ x} : rfl
@@ -104,11 +105,6 @@ end
 lemma homeo.image_compl  (f : homeo α β) (s : set α) : f '' -s = -(f '' s)  := 
 equiv.image_compl _ _
 
-variable (F : homeo X X)
-#check (F.to_equiv).to_fun
-#check ⇑F
-example (h : homeo α β) : (h : α → β) = h.to_equiv := rfl
-
 
 lemma stable_support (f : homeo X X) : f '' supp f = supp f :=
 begin
@@ -122,9 +118,9 @@ lemma notin_of_in_of_inter_empty {α : Type*} {s t : set α} {x : α} (H : s ∩
 begin
   by_contradiction h',
   have : x ∈ s ∩ t := ⟨h, h'⟩,
-  rw H at this,
-  assumption
+  finish 
 end
+
 
 lemma fundamental (f g : homeo X X) (H : supp f ∩ supp g = ∅) : f ∘ g = g ∘ f :=
 begin
@@ -172,6 +168,60 @@ begin
         ... = x : by  rw f_x
         ... = g x : by rw g_x
         ... = g (f x) : by rw f_x }
+end
+
+
+def suppp (f : homeo X X) := supp f
+
+
+lemma fundamental'' (f g : homeo X X) (H : suppp f ∩ suppp g = ∅) : f * g = g * f :=
+sorry
+
+lemma aux_1 {α : Type*} {β : Type*} {f : α → β} {g : β → α} (h : function.left_inverse  f g) (p : α → Prop) :
+f '' {a : α | p a} = {b : β | p (g b)} :=
+sorry
+
+lemma supp_conj (f g : homeo X X) : suppp (conj g f) = g '' suppp f :=
+begin
+  unfold suppp supp,
+  rw homeo.image_closure,
+  congr_n 1,
+  rw aux_1,
+  swap,
+  exact g.right_inv,
+  congr,
+  funext,
+  dsimp [conj],
+  
+    
+  sorry
+end
+lemma aux (g : homeo X X) : ⇑(homeo.symm g) ∘ ⇑g = id :=
+begin
+  funext,
+  apply equiv.inverse_apply_apply,
+end
+
+
+local notation f ∘ g := homeo.comp g f
+local notation `[[`a, b`]]` := comm a b
+set_option pp.coercions true
+lemma TT (g a b : homeo X X) (supp_hyp : suppp a ∩ g '' suppp b = ∅) :
+∃ c d e f : homeo X X, [[a, b]] = (conj c g)*(conj d g⁻¹)*(conj e g)*(conj f g⁻¹) :=
+begin
+  apply commutator_trading,
+  rw commuting,
+  apply fundamental'',
+  rw supp_conj,
+  replace supp_hyp : g.symm '' (suppp a ∩ g '' suppp b) = ∅,
+    by simp[supp_hyp, image_empty],
+  rw ←image_inter at supp_hyp,
+  rw ←image_comp at supp_hyp,
+  rw aux g at supp_hyp,
+  rw image_id at supp_hyp,
+  exact supp_hyp,
+
+  exact function.injective_of_left_inverse g.right_inv,
 end
 
 end topo
