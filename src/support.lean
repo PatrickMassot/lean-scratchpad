@@ -76,7 +76,7 @@ end
 def supp := closure {x : X | f x ≠ x}
 #check f
 lemma compl_supp_subset_fix : -supp f ⊆ fix f :=
-compl_subset_of_compl_subset 
+compl_subset_comm.1
   (calc  -fix f = {x : X | f x ≠ x} : rfl
             ... ⊆ supp f : subset_closure)
 
