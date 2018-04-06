@@ -3,12 +3,11 @@ import algebra.group algebra.big_operators
 
 noncomputable theory
 local attribute [instance] classical.prop_decidable
+local attribute [simp] mul_assoc
 
 open list
 
 variables {α β : Type} [group α] [group β] {a b g h : α}
-
-local attribute [simp] mul_assoc
 
 
 -- Conjuguation in a group
@@ -141,7 +140,6 @@ is_product S.set n a → gen_norm S a ≤ n :=
 by apply nat.find_min' (S.gen a) 
 
 
-
 lemma inv_norm_of_inv_set [str : group α] (S : @generating_set α str) :
 is_conj_invariant_set S.set → is_invariant_norm (gen_norm S) :=
 begin
@@ -180,18 +178,19 @@ local notation `[[`a, b`]]` := comm a b
 lemma commuting : [[a, b]] = 1 ↔ a*b = b*a :=
 by simp [comm, -mul_assoc, mul_inv_eq_iff_eq_mul]
 
-lemma commutator_trading (comm_hyp : [[conj g⁻¹ a, b]] = 1) :
-∃ c d e f : α, [[a, b]] = (conj c g)*(conj d g⁻¹)*(conj e g)*(conj f g⁻¹) :=
+lemma commutator_trading (comm_hyp : [[a, conj g b]] = 1) :
+∃ c d e f : α, [[a, b]] = (conj c g⁻¹)*(conj d g)*(conj e g⁻¹)*(conj f g) :=
 begin
   simp [conj] at comm_hyp,
   rw ←mul_assoc at comm_hyp,
 
-  let a':= g⁻¹*a*g,
+  let b':= g*b*g⁻¹,
 
   exact ⟨_, _, _, _, calc 
-  [[a, b]] = a * b * a⁻¹ * b⁻¹ : rfl
-      ...  = g * a' * g⁻¹ * (a'⁻¹ * a') * b * g * a'⁻¹ * (b⁻¹ * b) * g⁻¹ * b⁻¹ : by simp 
-      ...  = g * a' * g⁻¹ * a'⁻¹ * b * a' * g * a'⁻¹ * b⁻¹ * b * g⁻¹ * b⁻¹ : by simp [commuting.1 comm_hyp]
-      ...  = (conj 1 g) * (conj a' g⁻¹) * (conj (b*a') g) * (conj b g⁻¹) : by simp [conj]⟩
+   [[a, b]] = a * b * a⁻¹ * b⁻¹ : rfl
+      ...  = a * (g⁻¹  * b' * g)  * a⁻¹ * (g⁻¹ * b'⁻¹ * g)  : by simp
+      ...  = a * g⁻¹ * (a⁻¹ * a) * b' * g  * a⁻¹ * (b'⁻¹ * b') * g⁻¹ * b'⁻¹ * g  : by simp
+      ...  = a * g⁻¹ * (a⁻¹ * a) * b' * g  * (b'*a)⁻¹ * b' * g⁻¹ * b'⁻¹ * g  : by simp
+      ...  = a * g⁻¹ * (a⁻¹ * a) * b' * g  * (a*b')⁻¹ * b' * g⁻¹ * b'⁻¹ * g  : by simp [commuting.1 comm_hyp]
+      ...  = (conj a g⁻¹) * (conj (a*b') g) * (conj b' g⁻¹) * (conj 1 g) : by simp [conj]⟩
 end
-

@@ -3,8 +3,28 @@ import analysis.topology.continuity
 
 open set function
 
+local notation f`⁻¹` := f.symm
+
+
 variables {α : Type*} {β : Type*} {γ : Type*} {δ : Type*}
   [topological_space α] [topological_space β] [topological_space γ] [topological_space δ]
+
+theorem equiv.left_inverse (f : equiv α β) : left_inverse f⁻¹ f := f.left_inv
+
+theorem equiv.right_inverse (f : equiv α β) : function.right_inverse f⁻¹ f := f.right_inv
+
+lemma equiv.image_eq_preimage {α β} (e : α ≃ β) (s : set α) : e '' s = e.symm ⁻¹' s := 
+ext $ assume x, mem_image_iff_of_inverse e.left_inv e.right_inv
+
+lemma equiv.subset_image {α β} (e : α ≃ β) (s : set α) (t : set β) : t ⊆ e '' s ↔ e.symm '' t ⊆ s :=
+by rw [image_subset_iff, e.image_eq_preimage]
+
+lemma equiv.symm_image_image (f : equiv α β) (s : set α) : f.symm '' (f '' s) = s :=
+by rw [←image_comp] ; simpa using image_id s
+
+lemma equiv.image_compl (f : equiv α β) (s : set α) :
+  f '' -s = -(f '' s) :=
+image_compl_eq f.bijective
 
 
 structure homeo (α β) [topological_space α] [topological_space β] extends equiv α β :=
@@ -23,6 +43,25 @@ def homeo.comp : homeo α β → homeo β γ → homeo α γ
 
 def homeo.symm (h : homeo α β) : homeo β α :=
 { fun_con := h.inv_con, inv_con := h.fun_con, .. h.to_equiv.symm }
+
+lemma homeo.subset_image (e : homeo α β) (s : set α) (t : set β) : t ⊆ e '' s ↔ e.symm '' t ⊆ s :=
+equiv.subset_image _ _ _
+
+lemma homeo.symm_image_image (f : homeo α β) (s : set α) : f.symm '' (f '' s) = s :=
+equiv.symm_image_image _ _
+
+lemma homeo.image_closure (f : homeo α β) (s : set α) : f '' closure s = closure (f '' s) :=
+subset.antisymm
+  (image_closure_subset_closure_image f.fun_con)
+  ((homeo.subset_image _ _ _).2 $
+    calc f.symm '' closure (f '' s) ⊆ closure (f.symm '' (f '' s)) :
+        image_closure_subset_closure_image f.inv_con
+      ... = closure s : by rw f.symm_image_image s)
+
+
+lemma homeo.image_compl (f : homeo α β) (s : set α) : f '' -s = -(f '' s)  := 
+equiv.image_compl _ _
+
 
 --instance : has_inv (homeo α α) := ⟨λ f, f.symm⟩
 local notation f`⁻¹` := f.symm
@@ -91,6 +130,10 @@ instance aut (α : Type u) [topological_space α] : group (homeo α α) :=
 
 @[simp] theorem aut_mul_val (f g : homeo α α) (x) : (f * g) x = f (g x) :=
 homeo.comp_val _ _ _
+
+@[simp] theorem perm_mul_val (f g : equiv.perm α) (x) : (f * g) x = f (g x) :=
+equiv.trans_apply _ _ _
+
 
 @[simp] theorem aut_one_val (x) : (1 : homeo α α) x = x := rfl
 
