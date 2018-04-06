@@ -54,15 +54,11 @@ subset.antisymm
 set_option pp.coercions false
 
 
-variables {X : Type} [topological_space X] (f : X → X)
+def fix {X} (f : X → X) := { x : X | f x = x }
 
-def fix := { x : X | f x = x }
-
-
-
-lemma fix_stable : f '' fix f = fix f :=
+lemma fix_stable {X} (f : X → X) : f '' fix f = fix f :=
 begin
-  by_double_inclusion,
+  apply subset.antisymm,
   { intros x H,
     rcases H with ⟨y, y_in_fix, f_y_x⟩,
     simp [fix] at y_in_fix,
@@ -73,158 +69,81 @@ begin
     finish }
 end
 
+variables {X : Type} [topological_space X] (f : X → X)
+
 def supp := closure {x : X | f x ≠ x}
-#check f
+
+lemma supp_eq_closure_compl_fix : supp f = closure (-fix f) := rfl
+
+lemma compl_supp_eq_interior_fix : -supp f = interior (fix f) :=
+by rw [supp_eq_closure_compl_fix, closure_compl, compl_compl]
+
 lemma compl_supp_subset_fix : -supp f ⊆ fix f :=
-compl_subset_comm.1
-  (calc  -fix f = {x : X | f x ≠ x} : rfl
-            ... ⊆ supp f : subset_closure)
+by rw compl_supp_eq_interior_fix; apply interior_subset
 
-lemma fuck (f : equiv α β) (b) : f (f.inv_fun b) = b := f.right_inv b
+lemma mem_supp_or_fix (x) : x ∈ supp f ∨ f x = x :=
+or_iff_not_imp_left.2 (λ h, compl_supp_subset_fix _ h)
 
-lemma equiv.image_compl  (f : equiv α β) (s : set α) :
+lemma equiv.image_compl (f : equiv α β) (s : set α) :
   f '' -s = -(f '' s) :=
-begin
-  apply subset.antisymm,
-  { intros b b_in_image_compl,
-    rcases b_in_image_compl with ⟨a, a_compl_s, f_a_b⟩,
-    rw (equiv.apply_eq_iff_eq_inverse_apply f a b).1 f_a_b at a_compl_s,
-    exact (mt (@mem_image_iff_of_inverse α β f.to_fun f.inv_fun b s f.left_inv f.right_inv).1) a_compl_s },
-  { intros, 
-    rw subset_def,
-    intros b b_in_compl_image,
-    apply (@mem_image_iff_of_inverse _ _ _ _ _ _ f.left_inv f.right_inv).2,
-    have b_not_in_image := not_mem_of_mem_compl b_in_compl_image,
-    rw set.mem_compl_eq,
-    by_contra,
-    have := mem_image_of_mem f a,
-    rw fuck at this,
-    finish }
-end
+image_compl_eq f.bijective
 
-lemma homeo.image_compl  (f : homeo α β) (s : set α) : f '' -s = -(f '' s)  := 
+lemma homeo.image_compl (f : homeo α β) (s : set α) : f '' -s = -(f '' s)  := 
 equiv.image_compl _ _
 
-
 lemma stable_support (f : homeo X X) : f '' supp f = supp f :=
-begin
-  have point_set : f '' {x : X | f x ≠ x } = {x : X | f x ≠ x },
-    by rw [show {x : X | f x ≠ x} = -fix f, from rfl, homeo.image_compl f (fix f), fix_stable],
-  unfold supp,
-  rw [homeo.image_closure, point_set]
-end
+by rw [supp_eq_closure_compl_fix, homeo.image_closure, homeo.image_compl, fix_stable]
 
 lemma notin_of_in_of_inter_empty {α : Type*} {s t : set α} {x : α} (H : s ∩ t = ∅) (h : x ∈ s) : x ∉ t :=
-begin
-  by_contradiction h',
-  have : x ∈ s ∩ t := ⟨h, h'⟩,
-  finish 
-end
+(subset_compl_iff_disjoint.2 H) h
 
-
-lemma fundamental (f g : homeo X X) (H : supp f ∩ supp g = ∅) : f ∘ g = g ∘ f :=
+lemma fundamental {f g : homeo X X} (H : supp f ∩ supp g = ∅) : f ∘ g = g ∘ f :=
 begin
-  funext,
-  by_cases h : x ∈ supp f ∪ supp g,
-  { cases h,
-    { have x_in_fix_g : g x = x := 
-        calc x ∈ -supp g : notin_of_in_of_inter_empty H h
-          ... ⊆ fix g : compl_supp_subset_fix g,
-      
-      have f_x_supp_f : f x ∈ supp f := stable_support f ▸ mem_image_of_mem f h,
-      
-      have f_x_in_fix_g : g (f x) = f x := 
-        calc f x ∈ -supp g : notin_of_in_of_inter_empty H f_x_supp_f
-          ... ⊆ fix g : compl_supp_subset_fix g,
-      
-      
-      exact calc (f ∘ g) x = f (g x) : rfl
-        ... = f x : by rw x_in_fix_g 
-        ... = g (f x) : by  rw f_x_in_fix_g },
+  funext x,
+  suffices : ∀ f g : homeo X X, supp f ∩ supp g = ∅ → ∀ x ∈ supp f, f (g x) = g (f x),
+  { cases mem_supp_or_fix f x with hf hf,
+    { exact this f g H x hf },
+    cases mem_supp_or_fix g x with hg hg,
     { rw inter_comm at H,
-      have x_in_fix_f : f x = x := 
-        calc x ∈ -supp f : notin_of_in_of_inter_empty H h
-          ... ⊆ fix f : compl_supp_subset_fix f,
-      
-      have g_x_supp_g : g x ∈ supp g := stable_support g ▸ mem_image_of_mem g h,
-      
-      have g_x_in_fix_f : f (g x) = g x := 
-        calc g x ∈ -supp f : notin_of_in_of_inter_empty H g_x_supp_g
-          ... ⊆ fix f : compl_supp_subset_fix f,
-      
-      
-      exact calc (f ∘ g) x = f (g x) : rfl
-        ... = g x : by rw g_x_in_fix_f 
-        ... = g (f x) : by  rw x_in_fix_f } },
-  { replace h : x ∈ -(supp f ∪ supp g) := h,
-    rw compl_union (supp f) (supp g) at h,
-    
-    have f_x : f x = x := compl_supp_subset_fix f h.1,
-    have g_x : g x = x := compl_supp_subset_fix g h.2,
-    
-    
-    exact calc (f ∘ g) x = f (g x) : rfl
-        ... = f x : by rw g_x 
-        ... = x : by  rw f_x
-        ... = g x : by rw g_x
-        ... = g (f x) : by rw f_x }
+      exact (this g f H x hg).symm },
+    { simp [hf, hg] } },
+  intros f g H x h,
+  have hg : g x = x :=
+    compl_supp_subset_fix _ ((subset_compl_iff_disjoint.2 H) h),
+  simp [hg],
+  refine (compl_supp_subset_fix _ $ (subset_compl_iff_disjoint.2 H) _).symm,
+  rw ← stable_support,
+  exact mem_image_of_mem f h
 end
 
--- Next define I'd like to avoid
-def suppp (f : homeo X X) := supp f
+lemma fundamental' {f g : homeo X X} (H : supp f ∩ supp g = ∅) : f * g = g * f :=
+homeo.ext $ λ x, by simpa using congr_fun (fundamental H) x
 
--- I'd also like to avoid...
-lemma fundamental'' (f g : homeo X X) (H : suppp f ∩ suppp g = ∅) : f * g = g * f :=
-sorry
-
--- This is one is perfectly legitimate. I wait for Mario's new lemmas before trying that one
-lemma aux_1 {α : Type*} {β : Type*} {f : α → β} {g : β → α} (h : function.left_inverse  f g) (p : α → Prop) :
-f '' {a : α | p a} = {b : β | p (g b)} :=
-sorry
-
-lemma aux_2 {α : Type*} {β : Type*} {f : α → β} (h : injective f) : ∀ x y : α, f x = f y ↔ x = y :=
-assume x y, ⟨by apply h, λ h', congr_arg f h'⟩
-
-lemma supp_conj (f g : homeo X X) : suppp (conj g f) = g '' suppp f :=
+lemma supp_conj (f g : homeo X X) : supp (conj g f : homeo X X) = g '' supp f :=
 begin
-  unfold suppp supp,
+  unfold supp,
   rw homeo.image_closure,
   congr_n 1,
-  rw aux_1, swap, exact g.right_inv, -- I'd love to `rw aux_1 g.right_inv` instead
-  congr,
-  funext,
-  rw show ∀ b, (g.to_equiv).inv_fun b = g⁻¹ b, from λ b, rfl,
+  apply set.ext (λ x, _),
+  rw mem_image_iff_of_inverse g.left_inverse g.right_inverse,
+  apply not_congr,
   dsimp [conj],
-  congr_n 1,
-  exact 
-    calc ((g * f * g⁻¹) x = x) = (g (f (g⁻¹ x)) = x) : sorry
-    ... = (g⁻¹ (g ( f (g⁻¹ x))) = g⁻¹ x) : sorry -- here I'd like to use aux_2
-    ... = (( f (g⁻¹ x)) = g⁻¹ x) : sorry
+  exact calc
+     (g * f * g⁻¹) x = x
+        ↔ g⁻¹ (g (f (g⁻¹ x))) = g⁻¹ x : by simp [(g⁻¹).bijective.1.eq_iff]
+    ... ↔ (f (g⁻¹ x)) = g⁻¹ x : by rw [← aut_mul_val, mul_left_inv]; simp
 end
-
-lemma aux_3 (g : homeo X X) : ⇑(homeo.symm g) ∘ ⇑g = id :=
-begin
-  funext,
-  apply equiv.inverse_apply_apply,
-end
-
 
 local notation `[[`a, b`]]` := comm a b
 
-lemma TT (g a b : homeo X X) (supp_hyp : suppp a ∩ g '' suppp b = ∅) :
+lemma TT (g a b : homeo X X) (supp_hyp : supp a ∩ g '' supp b = ∅) :
 ∃ c d e f : homeo X X, [[a, b]] = (conj c g)*(conj d g⁻¹)*(conj e g)*(conj f g⁻¹) :=
-
 begin
   apply commutator_trading,
   rw commuting,
-  apply fundamental'',
-  rw supp_conj,
-  replace supp_hyp : g.symm '' (suppp a ∩ g '' suppp b) = ∅,
-    by simp[supp_hyp, image_empty],
-  rw [←image_inter, ←image_comp, aux_3 g, image_id] at supp_hyp,
-  exact supp_hyp,
-
-  exact function.injective_of_left_inverse g.right_inv,
+  rw ← supp_conj at supp_hyp,
+  have := congr_arg (conj g⁻¹) (fundamental' supp_hyp),
+  simpa [conj_mul, conj_action.symm]
 end
 
 end topo

@@ -16,14 +16,17 @@ local attribute [simp] mul_assoc
 
 def conj (a b : α) := a*b*a⁻¹
 
-lemma conj_action : conj (g * h) a = conj g (conj h a) :=
+@[simp] lemma conj_action : conj (g * h) a = conj g (conj h a) :=
 by simp[conj]
 
-lemma conj_by_one : conj 1 a = a :=
+@[simp] lemma conj_by_one : conj 1 a = a :=
 by simp[conj]
 
 lemma conj_is_mph : is_group_hom (conj g) :=
 by finish[is_group_hom, conj]
+
+@[simp] lemma conj_mul : conj g (a * b) = conj g a * conj g b :=
+conj_is_mph _ _
 
 lemma inv_conj : (conj b a)⁻¹ = conj b (a⁻¹) := 
 conj_is_mph.inv a
@@ -185,11 +188,10 @@ begin
 
   let a':= g⁻¹*a*g,
 
-  have := calc 
+  exact ⟨_, _, _, _, calc 
   [[a, b]] = a * b * a⁻¹ * b⁻¹ : rfl
       ...  = g * a' * g⁻¹ * (a'⁻¹ * a') * b * g * a'⁻¹ * (b⁻¹ * b) * g⁻¹ * b⁻¹ : by simp 
       ...  = g * a' * g⁻¹ * a'⁻¹ * b * a' * g * a'⁻¹ * b⁻¹ * b * g⁻¹ * b⁻¹ : by simp [commuting.1 comm_hyp]
-      ...  = (conj 1 g) * (conj a' g⁻¹) * (conj (b*a') g) * (conj b g⁻¹) : by simp [conj],
-  finish
+      ...  = (conj 1 g) * (conj a' g⁻¹) * (conj (b*a') g) * (conj b g⁻¹) : by simp [conj]⟩
 end
 
