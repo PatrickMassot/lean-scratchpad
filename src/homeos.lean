@@ -13,6 +13,8 @@ structure homeo (α β) [topological_space α] [topological_space β] extends eq
 
 instance : has_coe_to_fun (homeo α β) := ⟨_, λ f, f.to_fun⟩
 
+theorem homeo.bijective (f : homeo α β) : bijective f := f.to_equiv.bijective
+
 def homeo.comp : homeo α β → homeo β γ → homeo α γ
 | ⟨e1@⟨f₁, g₁, _, _⟩, f₁_con, g₁_con⟩ ⟨e2@⟨f₂, g₂, _, _⟩, f₂_con, g₂_con⟩ :=
 ⟨e1.trans e2,
@@ -25,6 +27,10 @@ def homeo.symm (h : homeo α β) : homeo β α :=
 --instance : has_inv (homeo α α) := ⟨λ f, f.symm⟩
 local notation f`⁻¹` := f.symm
 local notation f ∘ g := homeo.comp g f
+
+theorem homeo.left_inverse (f : homeo α β) : left_inverse f⁻¹ f := f.left_inv
+
+theorem homeo.right_inverse (f : homeo α β) : function.right_inverse f⁻¹ f := f.right_inv
 
 @[simp] lemma homeo.comp_val (f : homeo α β) (g : homeo β γ) (x) : homeo.comp f g x = g (f x) :=
 by cases f with e₁; cases g with e₂; cases e₁; cases e₂; refl
@@ -74,11 +80,18 @@ begin
   apply equiv.apply_inverse_apply,
 end
 universe u
-instance  aut (α : Type u) [topological_space α] : group (homeo α α) :=
-{ mul:=(∘), 
-  mul_assoc:=λ a b c, homeo.ext $ by  simp,
-  one:=homeo.id α, 
-  one_mul:=id_circ_f,
-  mul_one:=f_circ_id, 
-  inv:=homeo.symm, 
-  mul_left_inv:=homeo.symm_comp }
+instance aut (α : Type u) [topological_space α] : group (homeo α α) :=
+{ mul := (∘), 
+  mul_assoc := λ a b c, homeo.ext $ by simp,
+  one := homeo.id α, 
+  one_mul := id_circ_f,
+  mul_one := f_circ_id, 
+  inv := homeo.symm, 
+  mul_left_inv := homeo.symm_comp }
+
+@[simp] theorem aut_mul_val (f g : homeo α α) (x) : (f * g) x = f (g x) :=
+homeo.comp_val _ _ _
+
+@[simp] theorem aut_one_val (x) : (1 : homeo α α) x = x := rfl
+
+theorem aut_inv (f : homeo α α) : f⁻¹ = f.symm := rfl
