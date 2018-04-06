@@ -134,6 +134,7 @@ homeo.comp_val _ _ _
 @[simp] theorem perm_mul_val (f g : equiv.perm α) (x) : (f * g) x = f (g x) :=
 equiv.trans_apply _ _ _
 
+@[simp] theorem perm_one_val (x) : (1 : equiv.perm α) x = x := rfl
 
 @[simp] theorem aut_one_val (x) : (1 : homeo α α) x = x := rfl
 

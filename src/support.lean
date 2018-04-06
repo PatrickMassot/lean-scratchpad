@@ -2,7 +2,7 @@ import analysis.topology.topological_space
 import data.set
 import homeos
 import tactic.find
-import norms2
+import invariant_norms
 import tactic
 
 noncomputable theory
