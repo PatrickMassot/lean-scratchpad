@@ -21,17 +21,17 @@ by simp[conj]
 @[simp] lemma conj_by_one : conj 1 a = a :=
 by simp[conj]
 
-lemma conj_is_mph : is_group_hom (conj g) :=
+instance conj_is_mph : is_group_hom (conj g) :=
 by finish[is_group_hom, conj]
 
 @[simp] lemma conj_mul : conj g (a * b) = conj g a * conj g b :=
 conj_is_mph _ _
 
-lemma inv_conj : (conj b a)⁻¹ = conj b (a⁻¹) := 
-conj_is_mph.inv a
+lemma inv_conj : conj b (a⁻¹) = (conj b a)⁻¹ := 
+is_group_hom.inv (conj b) a
 
 lemma conj_one : conj a 1 = 1 :=
-conj_is_mph.one
+is_group_hom.one (conj a)
 
 -- Products
 -----------
@@ -85,7 +85,7 @@ begin
   existsi (map (conj g) l),
   repeat {split},
   { rw prod,
-    apply conj_is_mph.prod },
+    apply is_group_hom.prod },
   { clear prod a len n,
     intros x x_in_conj_l,
     rw mem_map at x_in_conj_l,
@@ -96,7 +96,7 @@ begin
       rw conj_b_x at conj_in_T,
       exact or.inl conj_in_T},
     { have conj_in_T := H b⁻¹ inS, 
-      rw [←inv_conj, conj_b_x] at conj_in_T,
+      rw [inv_conj, conj_b_x] at conj_in_T,
       exact or.inr conj_in_T } },
   { simp[len] }
 end

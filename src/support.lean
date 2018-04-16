@@ -51,16 +51,17 @@ calc
           ... =  closure (-(f '' (fix f))) : by rw f.image_compl
           ... =  closure (-(fix f)) : by rw fix_stable
 
-lemma fundamental' {f g : homeo X X} (H : supp f ∩ supp g = ∅) : f ∘ g = g ∘ f :=
+lemma fundamental {f g : homeo X X} (H : supp f ∩ supp g = ∅) : f * g = g * f :=
 begin
-  funext x,
+  apply homeo.ext,
+  intro x,
   suffices special_case : 
     ∀ f g : homeo X X, supp f ∩ supp g = ∅ → ∀ x ∈ supp f, f (g x) = g (f x),
   { cases mem_supp_or_fix f x with hf hf,
-    { exact special_case f g H x hf },
+    { simp [special_case f g H x hf] },
     { cases mem_supp_or_fix g x with hg hg,
       { rw inter_comm at H,
-        exact (special_case g f H x hg).symm },
+        simp [special_case g f H x hg] },
       { simp [hf, hg] } } },
   intros f g H x h,
   have hg : g x = x :=
@@ -70,9 +71,6 @@ begin
   rw ← stable_support,
   finish
 end
-
-lemma fundamental {f g : homeo X X} (H : supp f ∩ supp g = ∅) : f * g = g * f :=
-homeo.ext $ λ x, by simpa using congr_fun (fundamental' H) x
 
 lemma supp_conj (f g : homeo X X) : supp (conj g f : homeo X X) = g '' supp f :=
 begin
