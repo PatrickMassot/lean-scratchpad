@@ -1,5 +1,6 @@
 import analysis.topology.topological_space
 import data.set
+import data.fin
 import homeos
 import tactic.find
 import invariant_norms
@@ -8,7 +9,7 @@ import tactic
 noncomputable theory
 local attribute [instance] classical.prop_decidable
 
-set_option pp.coercions false
+--set_option pp.coercions false
 
 open set function equiv
 
@@ -99,6 +100,17 @@ begin
   rw commuting,
   exact fundamental supp_hyp,
 end
+
+
+local notation `Π_{i=` k `..` n `}` f := list.prod ((list.range' k (n-k+1)).map f)
+
+lemma commutators_crunching (U : set X) (φ f : homeo X X)
+(wandering_hyp : ∀ i j : ℕ, i ≠ j → ⇑(φ^i) '' U ∩ ⇑(φ^j) '' U = ∅)
+(n : ℕ) (a : ℕ → homeo X X) (b : ℕ → homeo X X) 
+(supp_hyp : ∀ k : ℕ, supp (a k) ⊆ U ∧ supp (b k) ⊆ U)
+(comm_hyp : f = Π_{i=1..n} λ i, [[a i, b i]]) :
+∃ A B C D : homeo X X, f = [[A, B]]* [[C, D]] := 
+sorry
 
 /-
 lemma fix_conj (f g : perm X) : fix (conj g f : perm X) = g '' (fix f) :=
