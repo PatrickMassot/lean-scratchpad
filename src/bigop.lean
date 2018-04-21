@@ -4,7 +4,7 @@ import data.nat.prime
 open classical
 
 open list
-/- The elements being manipulated are of type R, with operation op, with range r ∈ list I, filtered by the predicte I-/
+/- The elements being manipulated are of type R, with operation op, with range r ∈ list I, filtered by the predicate P-/
 variables {R : Type*} {I : Type*} (op : R → R → R) (nil: R) 
           (r : list I) (P : I → Prop) [∀ i, decidable $ P i] (F : I → R)
 
