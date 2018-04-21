@@ -21,16 +21,16 @@ by simp[conj]
 @[simp] lemma conj_by_one : conj 1 a = a :=
 by simp[conj]
 
-instance conj_is_mph : is_group_hom (conj g) :=
-by finish[is_group_hom, conj]
+instance conj.is_group_hom : is_group_hom (conj a) :=
+⟨λ x y, by simp [conj, mul_assoc]⟩
 
-@[simp] lemma conj_mul : conj g (a * b) = conj g a * conj g b :=
-conj_is_mph _ _
+lemma inv_conj : conj a (b⁻¹) = (conj a b)⁻¹ :=
+is_group_hom.inv (conj a) b
 
-lemma inv_conj : conj b (a⁻¹) = (conj b a)⁻¹ := 
-is_group_hom.inv (conj b) a
+lemma conj_mul : conj g (a * b) = conj g a * conj g b :=
+is_group_hom.mul _ _ _
 
-lemma conj_one : conj a 1 = 1 :=
+@[simp] lemma conj_one : conj a 1 = 1 :=
 is_group_hom.one (conj a)
 
 -- Products
@@ -181,9 +181,7 @@ by simp [comm, -mul_assoc, mul_inv_eq_iff_eq_mul]
 lemma commutator_trading (comm_hyp : [[a, conj g b]] = 1) :
 ∃ c d e f : α, [[a, b]] = (conj c g⁻¹)*(conj d g)*(conj e g⁻¹)*(conj f g) :=
 begin
-  simp [conj] at comm_hyp,
-  rw ←mul_assoc at comm_hyp,
-
+  unfold conj at comm_hyp,
   let b':= g*b*g⁻¹,
 
   exact ⟨_, _, _, _, calc 

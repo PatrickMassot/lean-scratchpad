@@ -41,6 +41,9 @@ lemma compl_supp_subset_fix : -supp f ⊆ fix f :=
 calc -supp f = interior (fix f) : by rw compl_supp_eq_interior_fix
          ... ⊆ fix f : interior_subset
 
+lemma fix_of_not_in_supp {x : X} {f : homeo X X} (h : x ∉ supp f) : f x = x :=
+compl_supp_subset_fix f h
+
 lemma mem_supp_or_fix (x) : x ∈ supp f ∨ f x = x :=
 or_iff_not_imp_left.2 (λ h, compl_supp_subset_fix _ h)
 -- Recall: or_iff_not_imp_left : a ∨ b ↔ (¬ a → b)
@@ -71,6 +74,44 @@ begin
   refine (compl_supp_subset_fix _ $ (subset_compl_iff_disjoint.2 H) _).symm,
   rw ← stable_support,
   finish
+end
+
+lemma fundamental' {f g : homeo X X} (H : supp f ∩ supp g = ∅) : f * g = g * f :=
+begin
+  ext x,
+  by_cases H' : x ∈ supp f ∨ x ∈ supp g,
+  { -- Here we assume H' : x ∈ supp f ∨ x ∈ supp g
+    wlog h : x ∈ supp f using f g,
+    have x_not_supp_g : x ∉ supp g := (subset_compl_iff_disjoint.2 H) h,
+    have f_x_supp_f : f x ∈ supp f, 
+    { have : f x ∈ f '' supp f := mem_image_of_mem f h, 
+      finish [stable_support f] },
+    have : f x ∉ supp g := (subset_compl_iff_disjoint.2 H) f_x_supp_f,
+    finish [fix_of_not_in_supp] },
+  { -- Now we assume H' : ¬(x ∈ supp f ∨ x ∈ supp g)
+    rw not_or_distrib at H',
+    finish [fix_of_not_in_supp] }
+end
+
+lemma fundamental'' {f g : homeo X X} (H : supp f ∩ supp g = ∅) : f * g = g * f :=
+begin
+  ext x,
+  by_cases H' : x ∈ supp f ∨ x ∈ supp g,
+  { -- Here we assume H' : x ∈ supp f ∨ x ∈ supp g
+    wlog h : x ∈ supp f using f g,
+    exact calc 
+    (f * g) x = f (g x) : by simp
+          ... = f x     : by { have x_not_supp_g : x ∉ supp g := (subset_compl_iff_disjoint.2 H) h,
+                               finish [fix_of_not_in_supp] }
+          ... = g (f x) : by { have f_x_supp_f : f x ∈ supp f,
+                               { have : f x ∈ f '' supp f := mem_image_of_mem f h, 
+                                 finish [stable_support f] },
+                               have : f x ∉ supp g := (subset_compl_iff_disjoint.2 H) f_x_supp_f,
+                               finish [fix_of_not_in_supp] }
+          ... = (g * f) x : by simp },
+  { -- Now we assume H' : ¬(x ∈ supp f ∨ x ∈ supp g)
+    rw not_or_distrib at H',
+    finish [fix_of_not_in_supp] }
 end
 
 lemma supp_conj (f g : homeo X X) : supp (conj g f : homeo X X) = g '' supp f :=

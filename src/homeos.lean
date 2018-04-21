@@ -83,6 +83,7 @@ lemma home.id_apply : (homeo.id α : α → α) = id := rfl
 
 @[simp] lemma homeo.id_val (x : α) : (homeo.id α) x = x := rfl
 
+@[extensionality]
 theorem homeo.ext {f g : homeo α β} (H : ∀ x, f x = g x) : f = g :=
 by cases f; cases g; congr;
    exact equiv.eq_of_to_fun_eq (funext H)
