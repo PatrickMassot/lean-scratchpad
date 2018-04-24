@@ -1,15 +1,16 @@
 import analysis.topology.topological_space
 import data.set
 import data.fin
-import homeos
 import tactic.find
+
+import homeos
 import invariant_norms
-import tactic
+import bigop
 
 noncomputable theory
 local attribute [instance] classical.prop_decidable
 
---set_option pp.coercions false
+set_option pp.coercions false
 
 open set function equiv
 
@@ -57,27 +58,6 @@ calc
 
 lemma fundamental {f g : homeo X X} (H : supp f ∩ supp g = ∅) : f * g = g * f :=
 begin
-  apply homeo.ext,
-  intro x,
-  suffices special_case : 
-    ∀ f g : homeo X X, supp f ∩ supp g = ∅ → ∀ x ∈ supp f, f (g x) = g (f x),
-  { cases mem_supp_or_fix f x with hf hf,
-    { simp [special_case f g H x hf] },
-    { cases mem_supp_or_fix g x with hg hg,
-      { rw inter_comm at H,
-        simp [special_case g f H x hg] },
-      { simp [hf, hg] } } },
-  intros f g H x h,
-  have hg : g x = x :=
-    compl_supp_subset_fix _ ((subset_compl_iff_disjoint.2 H) h),
-  simp [hg],
-  refine (compl_supp_subset_fix _ $ (subset_compl_iff_disjoint.2 H) _).symm,
-  rw ← stable_support,
-  finish
-end
-
-lemma fundamental' {f g : homeo X X} (H : supp f ∩ supp g = ∅) : f * g = g * f :=
-begin
   ext x,
   by_cases H' : x ∈ supp f ∨ x ∈ supp g,
   { -- Here we assume H' : x ∈ supp f ∨ x ∈ supp g
@@ -92,7 +72,7 @@ begin
     rw not_or_distrib at H',
     finish [fix_of_not_in_supp] }
 end
-
+/- Calc version of above proof
 lemma fundamental'' {f g : homeo X X} (H : supp f ∩ supp g = ∅) : f * g = g * f :=
 begin
   ext x,
@@ -113,7 +93,7 @@ begin
     rw not_or_distrib at H',
     finish [fix_of_not_in_supp] }
 end
-
+-/
 lemma supp_conj (f g : homeo X X) : supp (conj g f : homeo X X) = g '' supp f :=
 begin
   unfold supp,
@@ -130,72 +110,29 @@ begin
     ... ↔ (f (g⁻¹ x)) = g⁻¹ x : by rw [← aut_mul_val, mul_left_inv]; simp
 end
 
-local notation `[[`a, b`]]` := comm a b
+local notation `〚`a, b`〛` := comm a b  -- type with \llb / \rrb
 
 
 lemma trading_of_displaced (g a b : homeo X X) (supp_hyp : supp a ∩ g '' supp b = ∅) :
-∃ c d e f : homeo X X, [[a, b]] = (conj c g⁻¹)*(conj d g)*(conj e g⁻¹)*(conj f g) :=
+∃ c d e f : homeo X X, 〚a, b〛 = (conj c g⁻¹)*(conj d g)*(conj e g⁻¹)*(conj f g) :=
 begin
   apply commutator_trading,
-  rw ← supp_conj at supp_hyp,
-  rw commuting,
-  exact fundamental supp_hyp,
+  rw ←supp_conj at supp_hyp,
+  rw [commuting, fundamental supp_hyp]
 end
-
-
-local notation `Π_{i=` k `..` n `}` f := list.prod ((list.range' k (n-k+1)).map f)
+/-
+notation ` ` binders `↦` F:(scoped f, f) := F
+#check (x y) ↦ x + y + 1
+-/
 
 lemma commutators_crunching (U : set X) (φ f : homeo X X)
 (wandering_hyp : ∀ i j : ℕ, i ≠ j → ⇑(φ^i) '' U ∩ ⇑(φ^j) '' U = ∅)
-(n : ℕ) (a : ℕ → homeo X X) (b : ℕ → homeo X X) 
+(N : ℕ) (a : ℕ → homeo X X) (b : ℕ → homeo X X) 
 (supp_hyp : ∀ k : ℕ, supp (a k) ⊆ U ∧ supp (b k) ⊆ U)
-(comm_hyp : f = Π_{i=1..n} λ i, [[a i, b i]]) :
-∃ A B C D : homeo X X, f = [[A, B]]* [[C, D]] := 
-sorry
-
-/-
-lemma fix_conj (f g : perm X) : fix (conj g f : perm X) = g '' (fix f) :=
+(comm_hyp : f = Π_(i = 1..N) 〚a i, b i〛) :
+∃ A B C D : homeo X X, f = 〚A, B〛 * 〚C, D〛 := 
 begin
-  apply set.ext,
-  intro x,
-  rw mem_image_iff_of_inverse g.left_inverse g.right_inverse,
-  dsimp[conj],
-  exact calc
-     (g * f * g⁻¹) x = x
-        ↔ g⁻¹ (g (f (g⁻¹ x))) = g⁻¹ x : by { simp [(g⁻¹).bijective.1.eq_iff], }
-    ... ↔ (f (g⁻¹ x)) = g⁻¹ x : by  rw [← perm_mul_val, mul_left_inv] ; simp
+  let g := λ i, (Π_(j=1..i) 〚a i, b i〛 : homeo X X),
+  let F := (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i) : homeo X X),
+  sorry
 end
-
-
-instance : has_coe (homeo X X) (perm X) := ⟨λ f, f.to_equiv⟩
-
-set_option pp.coercions true
---set_option pp.all true 
-
-lemma mul_perm_homeo (f g : homeo X X) : (f : perm X)*(g : perm X) = (f*g : homeo X X) :=
-begin
-  apply equiv.ext,
-  intro x,
-  simp,
-  sorry -- rw equiv.trans_apply,
-end
-
-lemma inv_perm_homeo (f : homeo X X) : (f : perm X)⁻¹ = (f⁻¹ : homeo X X) := rfl
-
-lemma conj_perm_homeo (f g : homeo X X) : conj (g : perm X) (f : perm X) = (conj g f : homeo X X) :=
-by simp [conj, mul_perm_homeo, inv_perm_homeo]
-
-
-
-lemma supp_conj (f g : homeo X X) : supp (conj g f : homeo X X) = g '' supp f :=
-begin
-  unfold supp,
-  rw homeo.image_closure,
-  congr_n 1,
-  rw g.image_compl,
-  congr,
-  have := fix_conj (f : perm X)  (g : perm X),
-  rw conj_perm_homeo at this,
-  exact this
-end
--/
