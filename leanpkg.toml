@@ -6,3 +6,4 @@ path = "src"
 
 [dependencies]
 mathlib = {git = "https://github.com/leanprover/mathlib", rev = "479a12267bc8a6175f6b4c32e3a8f07d47d9a7ec"}
+bigop = {git = "https://github.com/PatrickMassot/bigop", rev = "1a805a9b970f0696248c9e0a789e7fd2d8fb036a"}
