@@ -2,6 +2,7 @@ import analysis.topology.topological_space
 import data.set
 import data.fin
 import tactic.find
+import tactic.ring
 
 import homeos
 import invariant_norms
@@ -113,17 +114,17 @@ end
 local notation `〚`a, b`〛` := comm a b  -- type with \llb / \rrb
 
 
-lemma trading_of_displaced (g a b : homeo X X) (supp_hyp : supp a ∩ g '' supp b = ∅) :
-∃ c d e f : homeo X X, 〚a, b〛 = (conj c g⁻¹)*(conj d g)*(conj e g⁻¹)*(conj f g) :=
+lemma trading_of_displaced (g a b : homeo X X) 
+  (supp_hyp : supp a ∩ g '' supp b = ∅) :
+  ∃ c d e f : homeo X X, 〚a, b〛 = (conj c g⁻¹)*(conj d g)*(conj e g⁻¹)*(conj f g) :=
 begin
   apply commutator_trading,
   rw ←supp_conj at supp_hyp,
   rw [commuting, fundamental supp_hyp]
 end
-/-
-notation ` ` binders `↦` F:(scoped f, f) := F
-#check (x y) ↦ x + y + 1
--/
+
+lemma toto (N : ℤ) : 1 + (1 + (N - 1) - 1) = N :=
+by ring
 
 lemma commutators_crunching (U : set X) (φ f : homeo X X)
 (wandering_hyp : ∀ i j : ℕ, i ≠ j → ⇑(φ^i) '' U ∩ ⇑(φ^j) '' U = ∅)
@@ -132,7 +133,22 @@ lemma commutators_crunching (U : set X) (φ f : homeo X X)
 (comm_hyp : f = Π_(i = 1..N) 〚a i, b i〛) :
 ∃ A B C D : homeo X X, f = 〚A, B〛 * 〚C, D〛 := 
 begin
-  let g := λ i, (Π_(j=1..i) 〚a i, b i〛 : homeo X X),
-  let F := (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i) : homeo X X),
+  let G := homeo X X,
+  let g := λ i, (Π_(j=1..i) 〚a i, b i〛: G),
+  let F := (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i) : G),
+  have numbers : 1 + (1 + (N - 1) - 1) = N :=
+  sorry,
+  
+  have numbers' : ∀ i, 1 + (i - 1) = i :=
+  sorry,
+
+  have numbers''' : ∀ i, N - (i - 1) = 1 + (N - i) := sorry,
+  
+  have := calc 
+  conj φ F = conj φ (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i)) : rfl
+  ... = Π_(i=0..(N-1)) conj φ (conj (φ^i) $ g (N-i)) : by rw (big.mph _ _ _ _ _ $ is_group_hom.mul (conj φ))
+  ... = Π_(i=0..(N-1)) conj (φ^(i+1)) $ g (N-i) : by simp[pow_succ]
+  ... = Π_(i=1..N) conj (φ^i) $ g (N-i+1) : by { rw big.shift _ _ _ _ 0 (N-1) 1, simp[numbers, numbers', numbers'''] },
+  
   sorry
 end
