@@ -144,11 +144,14 @@ begin
 
   have numbers''' : ∀ i, N - (i - 1) = 1 + (N - i) := sorry,
   
-  have := calc 
+  have cφf:= calc 
   conj φ F = conj φ (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i)) : rfl
-  ... = Π_(i=0..(N-1)) conj φ (conj (φ^i) $ g (N-i)) : by rw (big.mph _ _ _ _ _ $ is_group_hom.mul (conj φ))
+  ... = Π_(i=0..(N-1)) conj φ (conj (φ^i) $ g (N-i)) : by rw (big.mph _ _ _ _ _ (is_group_hom.mul (conj φ)) (is_group_hom.one _))
   ... = Π_(i=0..(N-1)) conj (φ^(i+1)) $ g (N-i) : by simp[pow_succ]
   ... = Π_(i=1..N) conj (φ^i) $ g (N-i+1) : by { rw big.shift _ _ _ _ 0 (N-1) 1, simp[numbers, numbers', numbers'''] },
   
+  have Finv := calc
+  F⁻¹ = (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i) : G)⁻¹ : rfl
+  ...= (Π_(i=0..(N-1)) (conj (φ^(N-1-i)) $ g (N-(N-1-i)))⁻¹ : G) : sorry,
   sorry
 end
