@@ -3,6 +3,7 @@ import data.set
 import data.fin
 import tactic.find
 import tactic.ring
+import algebra.group
 
 import homeos
 import invariant_norms
@@ -13,7 +14,7 @@ local attribute [instance] classical.prop_decidable
 
 set_option pp.coercions false
 
-open set function equiv
+open set function equiv list
 
 def fix {X} (f : X → X) := { x : X | f x = x }
 
@@ -122,10 +123,7 @@ begin
   rw ←supp_conj at supp_hyp,
   rw [commuting, fundamental supp_hyp]
 end
-
-lemma toto (N : ℤ) : 1 + (1 + (N - 1) - 1) = N :=
-by ring
-
+set_option pp.coercions true
 lemma commutators_crunching (U : set X) (φ f : homeo X X)
 (wandering_hyp : ∀ i j : ℕ, i ≠ j → ⇑(φ^i) '' U ∩ ⇑(φ^j) '' U = ∅)
 (N : ℕ) (a : ℕ → homeo X X) (b : ℕ → homeo X X) 
@@ -133,25 +131,50 @@ lemma commutators_crunching (U : set X) (φ f : homeo X X)
 (comm_hyp : f = Π_(i = 1..N) 〚a i, b i〛) :
 ∃ A B C D : homeo X X, f = 〚A, B〛 * 〚C, D〛 := 
 begin
-  let G := homeo X X,
-  let g := λ i, (Π_(j=1..i) 〚a i, b i〛: G),
-  let F := (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i) : G),
-  have numbers : 1 + (1 + (N - 1) - 1) = N :=
-  sorry,
-  
-  have numbers' : ∀ i, 1 + (i - 1) = i :=
-  sorry,
+  by_cases H : N = 0,
+  { rw big.empty_range at comm_hyp,
+    repeat { existsi (1 : homeo X X) },
+    simp [comm_hyp, comm],
+    simp [H, zero_lt_one] },
+  { replace H : N ≥ 1 := nat.succ_le_of_lt (nat.pos_of_ne_zero H),
+    let G := homeo X X,
+    let g := λ i, (Π_(j=1..i) 〚a i, b i〛: G),
+    let F := (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i) : G),
+    have numbers := 
+    calc 1 + (1 + (N - 1)) - 1 =  (1 + (N-1)) + 1 - 1 : by simp 
+    ... = 1 + (N-1) : by rw nat.add_sub_cancel
+    ... = N : by rw nat.add_sub_cancel' H,
+    
+    have cφf:= calc 
+    conj φ F = conj φ (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i)) : rfl
+    ... = Π_(i=0..(N-1)) conj φ (conj (φ^i) $ g (N-i)) : by rw (big.mph _ _ _ _ _ (is_group_hom.mul (conj φ)) (is_group_hom.one _))
+    ... = Π_(i=0..(N-1)) conj (φ^(i+1)) $ g (N-i) : by simp[pow_succ]
+    ... = Π_(i=1..N) conj (φ^i) $ g (N-(i-1)) : by { rw big.shift _ _ _ _ 0 (N-1) 1, simp, rw numbers, apply big.ext, simp, intros i hyp, rw nat.add_sub_cancel' (mem_range'.1 hyp).left},
 
-  have numbers''' : ∀ i, N - (i - 1) = 1 + (N - i) := sorry,
-  
-  have cφf:= calc 
-  conj φ F = conj φ (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i)) : rfl
-  ... = Π_(i=0..(N-1)) conj φ (conj (φ^i) $ g (N-i)) : by rw (big.mph _ _ _ _ _ (is_group_hom.mul (conj φ)) (is_group_hom.one _))
-  ... = Π_(i=0..(N-1)) conj (φ^(i+1)) $ g (N-i) : by simp[pow_succ]
-  ... = Π_(i=1..N) conj (φ^i) $ g (N-i+1) : by { rw big.shift _ _ _ _ 0 (N-1) 1, simp[numbers, numbers', numbers'''] },
-  
-  have Finv := calc
-  F⁻¹ = (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i) : G)⁻¹ : rfl
-  ...= (Π_(i=0..(N-1)) (conj (φ^(N-1-i)) $ g (N-(N-1-i)))⁻¹ : G) : sorry,
-  sorry
+    have := inv_is_group_anti_hom.mul,
+    
+    have numbers' : ∀ i, i ∈ range' 0 (N - 1 + 1 - 0) → N - (N - 1 - i) = i + 1 :=
+    begin
+      intros i hyp,
+      simp [nat.add_sub_cancel' H] at hyp,
+      --rw [nat.sub_sub, add_comm, nat.sub_sub_self hyp.2],
+      replace hyp := hyp.right,
+      have := nat.succ_le_of_lt  hyp,
+      
+      rw [← int.coe_nat_inj', int.coe_nat_sub, int.coe_nat_sub, int.coe_nat_sub],
+      { ring },
+      { assumption },
+      { sorry },
+      { sorry }
+    end,
+
+    have Finv := calc
+    F⁻¹ = (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i) : G)⁻¹ : rfl
+    ... = (λ (g : G), g⁻¹) (Π_(i=0..(N-1)) conj (φ^i) $ g (N-i) : G) : rfl
+    ... = (Π_(i=0..(N-1)) (conj (φ^(N-1-i)) $ g (N - (N - 1 - i)))⁻¹ : G) : by { rw big.range_anti_mph _ (1:G) _ _ _ _ this ; simp }
+    ... = (Π_(i=0..(N-1)) (conj (φ^(N-1-i)) $ g (i+1))⁻¹ : G) : by { apply big.ext, { simp }, intros i hyp, rw numbers' i hyp },
+    sorry,
+    apply_instance }
 end
+
+#check int.cast_inj
