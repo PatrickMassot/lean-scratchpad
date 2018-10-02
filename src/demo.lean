@@ -3,78 +3,73 @@ import data.set.basic
 import analysis.real
 import tactic.norm_num
 import .choice
+
 set_option pp.beta true
 
 example (P Q R : Prop) : ((P ∨ Q → R) ∧ P) → R :=
 begin
-  intro hyp,
-  cases hyp with hyp1 hyp2,
+  rintro ⟨hyp1, hyp2⟩,
   apply hyp1,
-  apply or.inl,
+  left,
   assumption,
 end
 
 example (P Q R : Prop) : ((P ∨ Q → R) ∧ P) → R :=
-begin
-  finish
-end
+by finish
 
 example (X : Type) (A B C : set X) : A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∩ C) :=
 begin
   ext x,
   split,
-  { intro hyp,
-    cases hyp with x_1 x_B_ou_C,
-    cases x_B_ou_C,
-    { apply or.inl,
+  { rintro ⟨x_1, x_B | x_C⟩,
+    { left,
       apply and.intro,
       { assumption },
       { assumption } },
-    { apply or.inr,
+    { right,
       apply and.intro,
       { assumption },
       { assumption } } },
-  { intro hyp, 
-    cases hyp, 
-    { cases hyp with x_A x_B,
-      apply and.intro,
+  { rintro (⟨x_A, x_B⟩|⟨x_A, x_C⟩),
+    { apply and.intro,
       { assumption },
-      { apply or.inl,
+      { left,
         assumption } },
-    { cases hyp with x_A x_C,
-        apply and.intro,
-        { assumption },
-        { apply or.inr,
-          assumption } } }
+    { apply and.intro,
+      { assumption },
+      { right,
+        assumption } } }
 end
 
-example (X Y : Type) (f : X → Y) : 
+example (X : Type) (A B C : set X) : A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∩ C) :=
+by ext x; split; finish
+
+example (X : Type) (A B C : set X) : A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∩ C) :=
+set.inter_distrib_left _ _ _
+
+example (X Y : Type) (f : X → Y) :
   (∀ y : Y, ∃ x : X, f(x) = y) ↔ (∃ g : Y → X, f ∘ g = id) :=
 begin
   split,
   { intro hyp,
     choice hyp with g H,
     existsi g,
-    funext y,
-    exact H y, },
-  { intros hyp y,
-    cases hyp with g f_rond_g,
+    exact funext H, },
+  { rintros ⟨g, f_rond_g⟩ y,
     existsi g y,
-    change (f ∘ g) y = y,
-    apply congr_fun,
-    exact f_rond_g, }
+    exact congr_fun f_rond_g y }
 end
 
-example (G H : Type) [group G] [group H] (f : G → H) 
+example (G H : Type) [group G] [group H] (f : G → H)
   (Hyp : ∀ a b : G, f (a*b) = f a * f b) : f 1 = 1 :=
 begin
   have clef := calc
    f 1 = f (1*1) : by simp
    ... = f 1 * f 1 : Hyp 1 1,
-  rw mul_self_iff_eq_one.1 (eq.symm clef),
+  exact mul_self_iff_eq_one.1 (eq.symm clef)
 end
 
-example (u : ℕ → ℝ) (H : ∀ n, u (n+1) = 2*u n) (H' : u 0 > 0) : 
+example (u : ℕ → ℝ) (H : ∀ n, u (n+1) = 2*u n) (H' : u 0 > 0) :
   ∀ n, u n > 0 :=
 begin
   intro n,
